@@ -4,7 +4,7 @@
 
 We want to assess whether there are systematic relationships between the probability of missing data and variables in the data set. More specifically, the goal is to identify variables that might relate to the probability of missing one of the analysis model variables. 
 
-We will fit a multiple regression model that predicts intentions to use steroids from the following predictors: knowledge of steroid effects, knowledge of testosterone effects, and knowledge of supplements. 
+The substantive goal is to fit a multiple regression model that predicts intentions to use steroids from the following predictors: knowledge of steroid effects, knowledge of testosterone effects, and knowledge of supplements. 
 
 The analysis model is: mayuse = b0 + b1(sterknow) + b2(testknow) + b3(suppknow) + e
 
