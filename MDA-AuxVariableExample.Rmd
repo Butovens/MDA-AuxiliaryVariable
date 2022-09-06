@@ -1,0 +1,231 @@
+ ---
+author: "Butovens Médé"
+date: "2/2/2021"
+output:
+  html_document:
+    theme: default
+    colortheme: dolphin
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+### Import necessary libraries 
+library(VIM)
+library(naniar)
+library(misty)
+library(mice)
+library(norm)
+library(tidyverse)
+library(skimr)
+library(dplyr)
+```
+
+# 1
+
+```{r , message = FALSE}
+### Import data
+dat_ster <- read_csv("steroid.csv", col_names = TRUE, na = "999")
+
+### Alternative method to upload data set
+# dat_ster2 <- read.csv("steroid.csv", header = TRUE, sep = ",", na = 999)
+
+### Look and summury of the data set
+skim(dat_ster)
+```
+* From the 'skim' function we can see the variables that have missing data, the number of missing datat that each variable has as well as their rate of completion (i.e. number of complete observation/ number of total observation)
+
+
+```{r}
+### Create New Data Set with four variables
+dat_ster_smol <- dat_ster %>% 
+  select(mayuse, sterknow, testknow, suppknow)
+
+### Alternative coding to subset data set
+# dat_ster_smo <- dat_ster[,c("mayuse","sterknow","testknow", "suppknow")]
+
+
+### Summary of the new dataset
+skim(dat_ster_smol)
+
+### Look at new dataset missing data pattern
+aggr(dat_ster_smol)
+```
+
+* We can see from this 2 plots that this smaller steroid data set has 7 different missing data patterns (right plot) and 3 of its variables have missing data (left plot). In addition the left plot tells us which have those variables have missing data (here: "mayuse", "sterknow" and "suppknow") and the proportion of missingness for each variable. On the right side of the right plot we can also see the proportion of the data that has a particular missing data pattern.
+
+*Note: This is in agreement with the result from the 'skim' function (which shows the proportion of complete cases). E.g. for the mayuse variable the 'skim' function shows .982 of proportion of completion (i.e.98.2%). Thus, proportion of missingness can be computed by 1 - .982 (i.e. 1 - proportion of completion) which gives us .018 (i.e. 1.8%). This is in agreement with the missingness plot from the VIM package.*
+
+*Note 2: The skim function in the R output gives the results with 3 decimal places, however when the result are knitted to html or pdf file, it only shows the results with 2 decimal places.*
+
+
+```{r}
+### Summary of data missing data
+dat_ster_smol %>% 
+  aggr(sortVar = T) %>% 
+  summary() 
+
+### Alternative coding
+# summary(aggr(dat_ster_smol,sortVar = T))$Combinations
+# summary(aggr(dat_ster_smol, sortVar = T))$missings
+```
+
+* Here we can see numerical representation of the missing data pattern for this smaller dataset. Under 'Combinations' 0 indicates no missing data variable and 1 indicates missing data in the variable. 'Count'in "Combinations' indicates the number of observations with this specific missing data pattern and 'Percent" indicates the percentage. Thus, as an example, there are 57 cases that have the missing data only in the last variable (i.e. suppknow) and this pattern represents about 4.57 percent of the whole dataset. In addition we can see that suppknow, as a variable, has a total of 81 miising observations which constitute a proportion of 0.06 for this variable (i.e. 6%). That information reiterates what we've seen in the plots.
+
+```{r}
+### Visualizing missing data
+dat_ster_smol %>% 
+  vis_miss()
+
+### Alternative coding
+# vis_miss(dat_ster_smol)
+```
+
+* The vis_miss function allow use to also see which osbervations in a given variable has missing data. The top numbers indicates the percentage of missing data for each variables with a level of precision at 2 decimal places. Thus, we can see that the variable "mayuse" has 1.76% of its observations missing, the variable "sterknow" has 0% of its observations missing, the variable "testknow" has 5.37% of its observations missing and variable "suppkonw" has 6.49% of its observations missing. In addition we can also see that the whole subdataset has 3.4% of its total data missing.
+
+*Note: VIM and naniar have almost identical evaluation of missing data, thus either package could be used to evaluate missing data and plot it.*
+
+
+```{r}
+### Look at the proportion of missing values in the whole dataset numerically
+dat_ster_smol %>% 
+  prop_miss()
+
+### Look at the proportion of missing values in each variable numerically
+apply(dat_ster_smol, 2, prop_miss)
+
+### Alternative coding
+# prop_miss(dat_ster_smol)
+```
+
+* The function 'prop_miss' (from the naniar Package) tells us that there is about 3.4% of missing values in the dataset, and also gives us the proportion for each variable (i.e. "mayuse", "sterknow", "testknow" and "suppknow"), that are respectively: 1.76%, 0%, 5.36% and 6.49%. This confirms what we saw with the function 'vis_miss'.
+
+```{r}
+### Look at missing data patterns with variables with naniar
+dat_ster_smol %>% 
+  gg_miss_upset()
+
+### Alternative coding
+# gg_miss_upset(dat_ster_smol) 
+```
+* This also confirms the information we've seem in the plots of the VIM package i.e. there are 7 patterns of missing data (6 pattern of missing + 1 of complete), and it also tells us the number of observations/participants with those patterns as well as which variables have co-occurring missing values. The 'set size' tells us the number of missing data values for the specific variable.
+
+```{r}
+### Compute covariance coverage
+dat_ster_smol %>% 
+  na.coverage()
+
+
+### Alternative method
+# md.pairs(dat_ster_smol)$rr / nrow(dat_ster_smol)
+# na.coverage(dat_ster_smol) 
+```
+
+* The variance-covariance coverage matrix tells us the proportion of cases where both variables are abserved. Thus here we can see that the observations in variables "mayuse' and "sterknow" are seen 98.2% of the time concurrently, the observations in "mayuse" and "testknow" are seen 93.8% of the time, and the observations in "mayuse" and "suppkonw" are seen 92.6% of the time concurrently.
+
+*Note: It is strange that the proportion of data that is available to estimate a covariance (or correlation) between a variable and itself (i.e. the variance across the diagonal of the matrix) is not 1*
+
+# 2
+
+```{r , cache = TRUE}
+### Create dataset with wanted variables
+dat_ster_big <- dat_ster %>%
+  # select columns
+  select(c(1 : 19))
+
+### Alternative coding
+# dat_ster_big <- dat_ster[1:19]
+
+### Compute Little's test
+source("mcar.r")
+
+### Full results of Little's test
+# little_test <- dat_ster_big %>% 
+#   mcar()
+
+# Extract Chi square result from Litle's test
+chi <- mcar(dat_ster_big)$chi.square
+
+# Extract p value result from Litle's test
+p <- mcar(dat_ster_big)$p.value
+
+# Extract degree of freedom result from Litle's test
+df <- mcar(dat_ster_big)$df 
+
+### Create summary table with results
+tibble::tibble(chi_square =  chi, p_value = p, df = df)
+```
+
+* Little's test does a multivariate t-test across all complete variables in the dataset. Here we have a p-value of 4.77e-11 which is below .05, therefore we can conclude that the missingness is **not** MCAR. However, with Little's test it is not possible to know which variable(s) is related to that missingness.
+
+
+# 3
+```{r}
+### Create missingness indicator for every variables that contains missing values
+dat_ster_R <- dat_ster_big %>%
+  mutate(R_age = if_else(is.na(age), 1, 0 ),
+         R_gpa = if_else(is.na(gpa), 1, 0 ),
+         R_faminc = if_else(is.na(faminc), 1, 0 ),
+         R_mayuse = if_else(is.na(mayuse), 1, 0 ),
+         R_attuse = if_else(is.na(attuse), 1, 0 ),
+         R_attusers = if_else(is.na(attusers), 1, 0 ),
+         R_strneff = if_else(is.na(streneff), 1, 0 ),
+         R_athabil = if_else(is.na(athabil), 1, 0 ),
+         R_wghtsat = if_else(is.na(wghtsat), 1, 0 ),
+         R_testknow = if_else(is.na(testknow), 1, 0 ),
+         R_suppknow = if_else(is.na(suppknow), 1, 0 ),
+         R_peerinfo = if_else(is.na(peerinfo), 1, 0 ),
+         R_teaminfo = if_else(is.na(teaminfo), 1, 0 ),
+         R_coainfo = if_else(is.na(coainfo), 1, 0 ),
+         R_coachtol = if_else(is.na(coachtol), 1, 0 ),
+         R_bodyimg = if_else(is.na(bodyimg), 1, 0 ),
+         R_esteem = if_else(is.na(esteem), 1, 0 ),
+         R_impuls = if_else(is.na(impuls), 1, 0 ))
+
+### Prepare data for Mplus
+datMplus <- dat_ster_R %>% 
+  mutate(across(everything(),
+                ~replace_na(.x, 99))) 
+
+### Alternative coding
+# dat_ster_R[is.na(dat_ster_R)] <- -99
+# datMplus <- dat_ster_R
+
+### Save data for Mplus in txt format
+write.table(datMplus, 
+            "steroid_mplus.csv", 
+            row.names = F, 
+            col.names = F,
+            sep = ",")
+
+### Alternative method to write a file directly in Mplus format
+# write.mplus(dat_ster_R, "steroid_mplus.dat")
+```
+
+*Note: The variable 'sterknow' doesn't have missing data so we do not need to create an indicator for missingness for this variable*
+
+## Table with results from chi-square test
+
+|   | Value | Degree of freedom | p-value|
+|----:|---:|----:|---:|
+| Full model|   15.574|  3 | 0.0014|
+| Constrained Model| 150.948|  57| 0.0000|
+| Chi-sq diff test| 143.977|  54| 0.0000|
+
+
+* We can see that the chi-Square difference test between the full model and the constrained model gives a chi-square fit statistic that is significantly different from 0 (i.e. p value < 0.05). Therefore, we reject the null hypothesis, that there is no difference in model fit between the full model and the constrained. Here the full model fits significantly better (has a significantly lower fit statistic) than the constrained model. Thus, missingness is NOT MCAR.
+
+* We can therefore potentially use the variables that have a the predictive paths that is significantly different from 0 as predictors of missingness.
+
+# 4
+
+* For the binary indicator r_mayuse, I would identify as potential correlates of missingness the variables age, streneff, athabil, sterknow and impuls which all have a significant regression coefficient in the path analysis. 
+
+* For the binary indicator r_testknow, I would identify as potential correlate of missingness only the variable gpa which has a significant regression coefficient in the path analysis.
+
+* For the binary indicator r_suppknow, I would identify as potential correlates of missingness the variables gpa, streneff, and peerinfo which all have a significant regression coefficient in the path analysis.
+
+# 5
+
+* From the Mplus output we can see that mayuse has a correlations superior or equal to +/-.4 (after rounding to a single decimal) with variables attuse $r = -.390$, attusers $r = -.383$ and impuls $r = 0.390$. \    
+Testknow has a correlation superior or equal to +/-.4 (after rounding to a single decimal) with the variable suppknow $r = .411$. Finally, suppknow has a correlations superior or equal to +/-.4 (after rounding to a single decimal) with streneff $r = .368$, sternknow $r = .451$, teamifo $r = .427$, esteem $r = .392$ (and potentially coachinfo $r = -.349$).
