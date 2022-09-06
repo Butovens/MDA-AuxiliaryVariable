@@ -1,5 +1,7 @@
 # Missing Data Analysis: Auxiliary variables 
 
+## This is an example of auxiliary variable selection in missing data analysis.
+
 We want to assess whether there are systematic relationships between the probability of missing data and variables in the data set. More specifically, the goal is to identify variables that might relate to the probability of missing one of the analysis model variables. 
 
 We will fit a multiple regression model that predicts intentions to use steroids from the following predictors: knowledge of steroid effects, knowledge of testosterone effects, and knowledge of supplements. 
