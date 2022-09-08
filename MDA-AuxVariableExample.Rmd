@@ -1,4 +1,5 @@
  ---
+title: "Missing Data Analysis: Auxiliary Variables"
 author: "Butovens Médé"
 date: "2/2/2021"
 output:
